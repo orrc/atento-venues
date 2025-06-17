@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__playwright__browser_click"
+      "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_wait_for",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(mv:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)"
+    ],
+    "deny": []
+  }
+}

@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atento Voucher Venues - Berlin</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+         crossorigin=""/>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 35%;
+            background: white;
+            border-right: 1px solid #e9ecef;
+            overflow-y: auto;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+        }
+
+        .main-content {
+            width: 65%;
+            background: #f8f9fa;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        header {
+            display: none;
+        }
+
+        .search-section {
+            padding: 2rem;
+            background: white;
+        }
+
+        .search-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .tags-section {
+            margin-top: 1rem;
+        }
+
+        .tags-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .tag-filter {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .tag-filter:hover {
+            background: #e9ecef;
+        }
+
+        .tag-filter input {
+            margin-right: 0.5rem;
+        }
+
+        .filter-category {
+            margin-bottom: 1rem;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        .filter-category.has-selections {
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        .category-header {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 0.75rem 1rem;
+            margin: 0;
+            cursor: pointer;
+            user-select: none;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #495057;
+            transition: background-color 0.2s;
+        }
+
+        .category-header:hover {
+            background: linear-gradient(135deg, #e9ecef, #dee2e6);
+        }
+
+        .category-toggle {
+            margin-right: 0.5rem;
+            font-size: 0.8rem;
+            transition: transform 0.2s;
+        }
+
+        .category-content {
+            padding: 1rem;
+            background: white;
+        }
+
+        .category-content .tags-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .content-area {
+            padding: 2rem;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .results-count {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .view-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .venues-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .venues-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .venue-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+        
+        .venue-category-emoji {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .venue-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .venue-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .venue-address {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .venue-address::before {
+            content: "📍";
+            margin-right: 0.5rem;
+        }
+
+        .venue-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .venue-tag {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .venue-about {
+            color: #555;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .venue-website {
+            margin-top: 1rem;
+        }
+
+        .venue-website a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .venue-website a::before {
+            content: "🌐";
+            margin-right: 0.5rem;
+        }
+
+        .venue-website a:hover {
+            text-decoration: underline;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .venues-map {
+            height: calc(100vh - 8rem);
+            border-radius: 0;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .map-popup {
+            max-width: 250px;
+        }
+
+        .map-popup h4 {
+            margin: 0 0 0.5rem 0;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .map-popup p {
+            margin: 0.3rem 0;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .map-popup .popup-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+        }
+
+        .map-popup .popup-tag {
+            background: #667eea;
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.7rem;
+        }
+
+        .map-popup .popup-website {
+            margin-top: 0.5rem;
+        }
+
+        .map-popup .popup-website a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 0.8rem;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+                position: relative;
+            }
+            
+            .main-content {
+                width: 100%;
+                height: auto;
+            }
+            
+            .search-section {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .venues-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .results-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .content-area {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar with filters -->
+        <div class="sidebar">
+
+            <div class="search-section">
+                <div class="search-grid">
+                    <input type="text" id="nameSearch" class="search-input" placeholder="Search venues by name or description...">
+                </div>
+                
+                <div class="tags-section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <h3>Filter by Categories:</h3>
+                        <div class="tag-logic-toggle">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: #666;">
+                                <input type="checkbox" id="tagLogicAnd" onchange="toggleTagLogic()">
+                                <span>Require ALL selected tags (AND)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="tagsGrid">
+                        <!-- Tags will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="tags-section" style="margin-top: 1.5rem;">
+                    <h3 style="margin-bottom: 0.5rem;">Filter by District:</h3>
+                    <div id="districtsGrid">
+                        <!-- Districts will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content area -->
+        <div class="main-content">
+            <div class="content-area">
+                <div class="results-header">
+                    <div class="results-count" id="resultsCount">Loading venues...</div>
+                    <div class="view-toggle">
+                        <button class="view-btn active" id="gridView" onclick="setView('grid')">Grid</button>
+                        <button class="view-btn" id="listView" onclick="setView('list')">List</button>
+                        <button class="view-btn" id="mapView" onclick="setView('map')">Map</button>
+                    </div>
+                </div>
+
+                <div id="venuesContainer" class="venues-grid">
+                    <div class="loading">Loading venue data...</div>
+                </div>
+                
+                <div id="mapContainer" class="venues-map" style="display: none;">
+                    <div id="map"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+         crossorigin=""></script>
+    <script>
+        let venues = [];
+        let filteredVenues = [];
+        let allTags = new Set();
+        let allDistricts = new Set();
+        let selectedTags = new Set();
+        let selectedDistricts = new Set();
+        let currentView = 'grid';
+        let tagLogicAnd = false;
+        let map = null;
+        let markers = [];
+        let categoryStates = {}; // Track which categories are open/closed
+        
+        // Load state from localStorage
+        function loadFromLocalStorage() {
+            try {
+                const savedTags = localStorage.getItem('atento-selected-tags');
+                const savedDistricts = localStorage.getItem('atento-selected-districts');
+                const savedCategoryStates = localStorage.getItem('atento-category-states');
+                const savedTagLogic = localStorage.getItem('atento-tag-logic');
+                
+                if (savedTags) {
+                    selectedTags = new Set(JSON.parse(savedTags));
+                }
+                if (savedDistricts) {
+                    selectedDistricts = new Set(JSON.parse(savedDistricts));
+                }
+                if (savedCategoryStates) {
+                    categoryStates = JSON.parse(savedCategoryStates);
+                }
+                if (savedTagLogic) {
+                    tagLogicAnd = JSON.parse(savedTagLogic);
+                    document.getElementById('tagLogicAnd').checked = tagLogicAnd;
+                }
+            } catch (e) {
+                console.warn('Failed to load from localStorage:', e);
+            }
+        }
+        
+        // Save state to localStorage
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('atento-selected-tags', JSON.stringify(Array.from(selectedTags)));
+                localStorage.setItem('atento-selected-districts', JSON.stringify(Array.from(selectedDistricts)));
+                localStorage.setItem('atento-category-states', JSON.stringify(categoryStates));
+                localStorage.setItem('atento-tag-logic', JSON.stringify(tagLogicAnd));
+            } catch (e) {
+                console.warn('Failed to save to localStorage:', e);
+            }
+        }
+
+        // Load venues data
+        async function loadVenues() {
+            try {
+                const response = await fetch('./venues_berlin.json');
+                
+                venues = await response.json();
+                
+                // Extract all unique tags and districts
+                venues.forEach(venue => {
+                    venue.tags.forEach(tag => allTags.add(tag));
+                    if (venue.district) {
+                        allDistricts.add(venue.district);
+                    }
+                });
+                
+                loadFromLocalStorage(); // Load saved state first
+                filteredVenues = [...venues];
+                initializeCategoryStates();
+                filterVenues(); // Apply loaded filters
+                renderTagFilters();
+                renderDistrictFilters();
+                renderVenues();
+                updateResultsCount();
+            } catch (error) {
+                console.error('Error loading venues:', error);
+                document.getElementById('venuesContainer').innerHTML = 
+                    '<div class="no-results">Error loading venue data. Please check that venue data files are available.</div>';
+            }
+        }
+
+        // Category groupings for smart organization
+        const tagCategories = {
+            '🍽️ Food & Dining': ['Restaurant', 'Italian', 'Asian', 'European', 'German', 'French', 'Spanish', 'Indian', 'Japanese', 'Chinese', 'Thai', 'Vietnamese', 'Mediterranean', 'Mexican', 'American', 'Brazilian', 'Argentine', 'Swiss', 'Café', 'Cafés', 'Bar', 'Breakfast', 'Brunch', 'Dessert', 'Ice Cream', 'Cake', 'Patisserie', 'Deli', 'Wine and Spirits', 'Beer', 'Vegetarian options', 'Michelin', 'Burger', 'Pancakes', 'Catering', 'Austrian', 'Pasta', 'Fish', 'Fusion', 'Greek', 'Korean', 'Turkish', 'Lebanese', 'Moroccan', 'Ethiopian', 'Russian', 'Polish', 'Hungarian', 'Czech', 'Scandinavian', 'British', 'Irish', 'Portuguese', 'Peruvian', 'Chilean', 'Colombian', 'Argentinian', 'Uruguayan', 'Venezuelan', 'Cuban', 'Jamaican', 'African', 'Middle Eastern', 'Contemporary', 'Modern', 'Traditional', 'Classic', 'Fine Dining', 'Casual Dining', 'Fast Food', 'Street Food', 'Tapas', 'Dim Sum', 'Sushi', 'Ramen', 'Pizza', 'Seafood', 'Steakhouse', 'Barbecue', 'BBQ', 'Grill', 'Rooftop', 'Terrace', 'Garden Restaurant', 'Bistro', 'Brasserie', 'Pub', 'Brewery', 'Cocktail Bar', 'Wine Bar', 'Lounge', 'Nightclub', 'Coffee', 'Juice Bar', 'Smoothie', 'Bakery', 'Pastry', 'Chocolatier', 'Chocolate', 'Gelato', 'Frozen Yogurt', 'Vegan', 'Vegan Options', 'Gluten-free', 'Organic', 'Farm-to-table', 'Local', 'Seasonal', 'Cooking classes', 'Food Market', 'Food Hall', 'Food Court'],
+            '🛍️ Shopping & Retail': ['Shop', 'Fashion', 'Clothing', 'Accessories', 'Bookstore', 'Furniture', 'Sport store', 'Lingerie store', 'Tailor'],
+            '💅 Health & Beauty': ['Beauty', 'Hair', 'Hair salon', 'Spa', 'Cosmetic', 'Nail salon', 'Barber', 'Health', 'Fitness', 'Gym'],
+            '🎭 Culture & Entertainment': ['Culture', 'Art', 'Museum', 'Performing Arts', 'Nightlife', 'Entertainment', 'Tour', 'Outdoor', 'Sport', 'Garden', 'Nature', 'Park', 'Kayak'],
+        };
+        
+        const districtGroups = {
+            '🏛️ Central Berlin': ['Mitte', 'Kreuzberg', 'Prenzlauer Berg', 'Friedrichshain', 'Tiergarten', 'Moabit'],
+            '🌲 North Berlin': ['Pankow', 'Weißensee', 'Wedding', 'Gesundbrunnen', 'Reinickendorf', 'Tegel', 'Waidmannslust', 'Hermsdorf', 'Frohnau', 'Heiligensee', 'Borsigwalde', 'Wittenau', 'Märkisches Viertel'],
+            '🌳 South Berlin': ['Neukölln', 'Tempelhof', 'Mariendorf', 'Marienfelde', 'Steglitz', 'Zehlendorf', 'Dahlem', 'Lankwitz', 'Lichterfelde', 'Nikolassee', 'Wannsee', 'Schlachtensee', 'Friedenau'],
+            '🌆 West Berlin': ['Charlottenburg', 'Wilmersdorf', 'Schöneberg', 'Charlottenburg-Nord', 'Westend', 'Halensee', 'Grunewald', 'Schmargendorf'],
+            '🏭 East Berlin': ['Köpenick', 'Lichtenberg', 'Friedrichsfelde', 'Karlshorst', 'Rummelsburg', 'Alt-Treptow', 'Johannisthal', 'Adlershof', 'Baumschulenweg', 'Niederschöneweide', 'Oberschöneweide'],
+            '🏘️ Outer Areas': ['Spandau', 'Staaken', 'Wilhelmstadt', 'Gatow', 'Kladow', 'Hakenfelde', 'Siemensstadt', 'Haselhorst', 'Marzahn', 'Hellersdorf', 'Biesdorf', 'Kaulsdorf', 'Mahlsdorf', 'Alt-Hohenschönhausen', 'Neu-Hohenschönhausen', 'Malchow', 'Wartenberg', 'Falkenberg', 'Karow', 'Buch', 'Französisch Buchholz', 'Rosenthal', 'Wilhelmsruh', 'Heinersdorf', 'Blankenburg', 'Niederschönhausen', 'Fennpfuhl'],
+        };
+        
+        // Calculate filter counts and availability based on current filters
+        function getFilterCounts() {
+            const counts = { tags: {}, districts: {} };
+            const available = { tags: new Set(), districts: new Set() };
+            
+            // Get venues that match current name search
+            const nameSearchEl = document.getElementById('nameSearch');
+            const nameQuery = nameSearchEl ? nameSearchEl.value.toLowerCase() : '';
+            
+            const baseFilteredVenues = venues.filter(venue => {
+                const matchesName = venue.name.toLowerCase().includes(nameQuery);
+                const matchesDescription = venue.about ? venue.about.toLowerCase().includes(nameQuery) : false;
+                return matchesName || matchesDescription;
+            });
+            
+            // For each possible filter combination, count results
+            baseFilteredVenues.forEach(venue => {
+                // Check what would happen if we add each tag to current district filters
+                let matchesCurrentDistricts = true;
+                if (selectedDistricts.size > 0) {
+                    matchesCurrentDistricts = selectedDistricts.has(venue.district);
+                }
+                
+                if (matchesCurrentDistricts) {
+                    venue.tags.forEach(tag => {
+                        counts.tags[tag] = (counts.tags[tag] || 0) + 1;
+                        available.tags.add(tag);
+                    });
+                }
+                
+                // Check what would happen if we add each district to current tag filters
+                let matchesCurrentTags = true;
+                if (selectedTags.size > 0) {
+                    if (tagLogicAnd) {
+                        matchesCurrentTags = Array.from(selectedTags).every(tag => venue.tags.includes(tag));
+                    } else {
+                        matchesCurrentTags = venue.tags.some(tag => selectedTags.has(tag));
+                    }
+                }
+                
+                if (matchesCurrentTags && venue.district) {
+                    counts.districts[venue.district] = (counts.districts[venue.district] || 0) + 1;
+                    available.districts.add(venue.district);
+                }
+            });
+            
+            return { counts, available };
+        }
+        
+        // Render tag filters with smart grouping and counts
+        function renderTagFilters() {
+            const tagsGrid = document.getElementById('tagsGrid');
+            const { counts, available } = getFilterCounts();
+            
+            let html = '';
+            
+            Object.entries(tagCategories).forEach(([categoryName, categoryTags]) => {
+                const availableInCategory = categoryTags.filter(tag => available.tags.has(tag));
+                
+                if (availableInCategory.length === 0) return;
+                
+                const totalInCategory = availableInCategory.reduce((sum, tag) => sum + (counts.tags[tag] || 0), 0);
+                
+                // Check if this category has any selected tags
+                const hasSelections = availableInCategory.some(tag => selectedTags.has(tag));
+                const selectionClass = hasSelections ? ' has-selections' : '';
+                
+                html += `
+                    <div class="filter-category${selectionClass}">
+                        <h4 class="category-header" onclick="toggleCategory('tag-${categoryName}')">
+                            <span class="category-toggle">▶</span>
+                            ${categoryName} (${totalInCategory})
+                        </h4>
+                        <div class="category-content" id="tag-${categoryName}" style="display: none;">
+                            <div class="tags-grid">
+                `;
+                
+                availableInCategory
+                    .sort((a, b) => (counts.tags[b] || 0) - (counts.tags[a] || 0))
+                    .forEach(tag => {
+                        const count = counts.tags[tag] || 0;
+                        const isSelected = selectedTags.has(tag);
+                        const opacity = count === 0 ? 'opacity: 0.4;' : '';
+                        
+                        html += `
+                            <label class="tag-filter" style="${opacity}">
+                                <input type="checkbox" value="${tag}" ${isSelected ? 'checked' : ''} onchange="toggleTag('${tag}')">
+                                <span>${tag} (${count})</span>
+                            </label>
+                        `;
+                    });
+                
+                html += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Handle uncategorized tags
+            const categorizedTags = new Set(Object.values(tagCategories).flat());
+            const uncategorizedTags = Array.from(available.tags).filter(tag => !categorizedTags.has(tag));
+            
+            if (uncategorizedTags.length > 0) {
+                const totalUncategorized = uncategorizedTags.reduce((sum, tag) => sum + (counts.tags[tag] || 0), 0);
+                
+                // Check if other category has any selected tags
+                const hasSelections = uncategorizedTags.some(tag => selectedTags.has(tag));
+                const selectionClass = hasSelections ? ' has-selections' : '';
+                
+                html += `
+                    <div class="filter-category${selectionClass}">
+                        <h4 class="category-header" onclick="toggleCategory('tag-other')">
+                            <span class="category-toggle">▶</span>
+                            🏷️ Other (${totalUncategorized})
+                        </h4>
+                        <div class="category-content" id="tag-other" style="display: none;">
+                            <div class="tags-grid">
+                `;
+                
+                uncategorizedTags
+                    .sort((a, b) => (counts.tags[b] || 0) - (counts.tags[a] || 0))
+                    .forEach(tag => {
+                        const count = counts.tags[tag] || 0;
+                        const isSelected = selectedTags.has(tag);
+                        const opacity = count === 0 ? 'opacity: 0.4;' : '';
+                        
+                        html += `
+                            <label class="tag-filter" style="${opacity}">
+                                <input type="checkbox" value="${tag}" ${isSelected ? 'checked' : ''} onchange="toggleTag('${tag}')">
+                                <span>${tag} (${count})</span>
+                            </label>
+                        `;
+                    });
+                
+                html += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            tagsGrid.innerHTML = html;
+            
+            // Apply saved category states after rendering
+            setTimeout(() => applyCategoryStates(), 0);
+        }
+
+        // Render district filters with smart grouping and counts
+        function renderDistrictFilters() {
+            const districtsGrid = document.getElementById('districtsGrid');
+            const { counts, available } = getFilterCounts();
+            
+            if (available.districts.size === 0) {
+                districtsGrid.innerHTML = '<p style="color: #666; font-style: italic;">District data not available</p>';
+                return;
+            }
+            
+            let html = '';
+            
+            Object.entries(districtGroups).forEach(([groupName, groupDistricts]) => {
+                const availableInGroup = groupDistricts.filter(district => available.districts.has(district));
+                
+                if (availableInGroup.length === 0) return;
+                
+                const totalInGroup = availableInGroup.reduce((sum, district) => sum + (counts.districts[district] || 0), 0);
+                
+                // Check if this group has any selected districts
+                const hasSelections = availableInGroup.some(district => selectedDistricts.has(district));
+                const selectionClass = hasSelections ? ' has-selections' : '';
+                
+                html += `
+                    <div class="filter-category${selectionClass}">
+                        <h4 class="category-header" onclick="toggleCategory('district-${groupName}')">
+                            <span class="category-toggle">▶</span>
+                            ${groupName} (${totalInGroup})
+                        </h4>
+                        <div class="category-content" id="district-${groupName}" style="display: none;">
+                            <div class="tags-grid">
+                `;
+                
+                availableInGroup
+                    .sort((a, b) => (counts.districts[b] || 0) - (counts.districts[a] || 0))
+                    .forEach(district => {
+                        const count = counts.districts[district] || 0;
+                        const isSelected = selectedDistricts.has(district);
+                        const opacity = count === 0 ? 'opacity: 0.4;' : '';
+                        
+                        html += `
+                            <label class="tag-filter" style="${opacity}">
+                                <input type="checkbox" value="${district}" ${isSelected ? 'checked' : ''} onchange="toggleDistrict('${district}')">
+                                <span>${district} (${count})</span>
+                            </label>
+                        `;
+                    });
+                
+                html += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Handle ungrouped districts
+            const groupedDistricts = new Set(Object.values(districtGroups).flat());
+            const ungroupedDistricts = Array.from(available.districts).filter(district => !groupedDistricts.has(district));
+            
+            if (ungroupedDistricts.length > 0) {
+                const totalUngrouped = ungroupedDistricts.reduce((sum, district) => sum + (counts.districts[district] || 0), 0);
+                
+                // Check if other districts have any selections
+                const hasSelections = ungroupedDistricts.some(district => selectedDistricts.has(district));
+                const selectionClass = hasSelections ? ' has-selections' : '';
+                
+                html += `
+                    <div class="filter-category${selectionClass}">
+                        <h4 class="category-header" onclick="toggleCategory('district-other')">
+                            <span class="category-toggle">▶</span>
+                            🏘️ Other Areas (${totalUngrouped})
+                        </h4>
+                        <div class="category-content" id="district-other" style="display: none;">
+                            <div class="tags-grid">
+                `;
+                
+                ungroupedDistricts
+                    .sort((a, b) => (counts.districts[b] || 0) - (counts.districts[a] || 0))
+                    .forEach(district => {
+                        const count = counts.districts[district] || 0;
+                        const isSelected = selectedDistricts.has(district);
+                        const opacity = count === 0 ? 'opacity: 0.4;' : '';
+                        
+                        html += `
+                            <label class="tag-filter" style="${opacity}">
+                                <input type="checkbox" value="${district}" ${isSelected ? 'checked' : ''} onchange="toggleDistrict('${district}')">
+                                <span>${district} (${count})</span>
+                            </label>
+                        `;
+                    });
+                
+                html += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            districtsGrid.innerHTML = html;
+            
+            // Apply saved category states after rendering
+            setTimeout(() => applyCategoryStates(), 0);
+        }
+        
+        // Initialize category states with defaults
+        function initializeCategoryStates() {
+            if (Object.keys(categoryStates).length === 0) {
+                // Default: only Food & Dining open, all others collapsed
+                categoryStates['tag-🍽️ Food & Dining'] = true;
+                categoryStates['district-🏛️ Central Berlin'] = true; // Keep main district group open too
+                
+                // All other categories start collapsed
+                Object.keys(tagCategories).forEach(categoryName => {
+                    const key = `tag-${categoryName}`;
+                    if (!categoryStates.hasOwnProperty(key)) {
+                        categoryStates[key] = false;
+                    }
+                });
+                
+                Object.keys(districtGroups).forEach(groupName => {
+                    const key = `district-${groupName}`;
+                    if (!categoryStates.hasOwnProperty(key)) {
+                        categoryStates[key] = groupName === '🏛️ Central Berlin';
+                    }
+                });
+            }
+        }
+        
+        // Toggle category visibility and remember state
+        function toggleCategory(categoryId) {
+            const content = document.getElementById(categoryId);
+            const toggle = content.previousElementSibling.querySelector('.category-toggle');
+            
+            const isOpen = categoryStates[categoryId];
+            categoryStates[categoryId] = !isOpen;
+            
+            if (categoryStates[categoryId]) {
+                content.style.display = 'block';
+                toggle.textContent = '▼';
+            } else {
+                content.style.display = 'none';
+                toggle.textContent = '▶';
+            }
+            
+            saveToLocalStorage();
+        }
+        
+        // Apply saved category states to DOM
+        function applyCategoryStates() {
+            Object.entries(categoryStates).forEach(([categoryId, isOpen]) => {
+                const content = document.getElementById(categoryId);
+                const header = content?.previousElementSibling;
+                const toggle = header?.querySelector('.category-toggle');
+                
+                if (content && toggle) {
+                    if (isOpen) {
+                        content.style.display = 'block';
+                        toggle.textContent = '▼';
+                    } else {
+                        content.style.display = 'none';
+                        toggle.textContent = '▶';
+                    }
+                }
+            });
+        }
+
+        // Toggle tag filter
+        function toggleTag(tag) {
+            if (selectedTags.has(tag)) {
+                selectedTags.delete(tag);
+            } else {
+                selectedTags.add(tag);
+            }
+            saveToLocalStorage();
+            filterVenues();
+            // Re-render filters to update counts and availability
+            renderTagFilters();
+            renderDistrictFilters();
+        }
+
+        // Toggle district filter
+        function toggleDistrict(district) {
+            if (selectedDistricts.has(district)) {
+                selectedDistricts.delete(district);
+            } else {
+                selectedDistricts.add(district);
+            }
+            saveToLocalStorage();
+            filterVenues();
+            // Re-render filters to update counts and availability
+            renderTagFilters();
+            renderDistrictFilters();
+        }
+
+        // Toggle AND/OR logic for tags
+        function toggleTagLogic() {
+            tagLogicAnd = document.getElementById('tagLogicAnd').checked;
+            saveToLocalStorage();
+            filterVenues();
+            // Re-render filters to update counts and availability
+            renderTagFilters();
+            renderDistrictFilters();
+        }
+
+        // Filter venues based on search inputs, selected tags, and districts
+        function filterVenues() {
+            const nameSearchEl = document.getElementById('nameSearch');
+            const nameQuery = nameSearchEl ? nameSearchEl.value.toLowerCase() : '';
+            
+            filteredVenues = venues.filter(venue => {
+                const matchesName = venue.name.toLowerCase().includes(nameQuery);
+                const matchesDescription = venue.about ? venue.about.toLowerCase().includes(nameQuery) : false;
+                const matchesSearch = matchesName || matchesDescription;
+                
+                // Tag filtering
+                let matchesTags = true;
+                if (selectedTags.size > 0) {
+                    if (tagLogicAnd) {
+                        // AND logic: venue must have ALL selected tags
+                        matchesTags = Array.from(selectedTags).every(tag => venue.tags.includes(tag));
+                    } else {
+                        // OR logic: venue must have at least one selected tag
+                        matchesTags = venue.tags.some(tag => selectedTags.has(tag));
+                    }
+                }
+                
+                // District filtering (OR logic)
+                let matchesDistrict = true;
+                if (selectedDistricts.size > 0) {
+                    matchesDistrict = selectedDistricts.has(venue.district);
+                }
+                
+                return matchesSearch && matchesTags && matchesDistrict;
+            });
+            
+            // Sort alphabetically by venue name
+            filteredVenues.sort((a, b) => a.name.localeCompare(b.name));
+            
+            renderVenues();
+            updateResultsCount();
+            
+            // Update map if currently showing
+            if (currentView === 'map') {
+                updateMapMarkers();
+            }
+        }
+
+        // Render venues
+        function renderVenues() {
+            const container = document.getElementById('venuesContainer');
+            container.className = currentView === 'grid' ? 'venues-grid' : 'venues-list';
+            
+            if (filteredVenues.length === 0) {
+                container.innerHTML = '<div class="no-results">No venues found matching your criteria.</div>';
+                return;
+            }
+            
+            // Function to get category emoji based on venue tags
+            function getCategoryEmoji(tags) {
+                const categoryEmojis = {
+                    'Restaurant': '🍽️', 'Italian': '🍽️', 'Asian': '🍽️', 'European': '🍽️', 'German': '🍽️',
+                    'French': '🍽️', 'Spanish': '🍽️', 'Indian': '🍽️', 'Japanese': '🍽️', 'Chinese': '🍽️',
+                    'Thai': '🍽️', 'Vietnamese': '🍽️', 'Mediterranean': '🍽️', 'Mexican': '🍽️',
+                    'American': '🍽️', 'Brazilian': '🍽️', 'Argentine': '🍽️', 'Swiss': '🍽️',
+                    'Café': '☕', 'Cafés': '☕', 'Bar': '🍸', 'Breakfast': '🥞', 'Brunch': '🥞',
+                    'Dessert': '🍰', 'Ice Cream': '🍦', 'Cake': '🍰', 'Patisserie': '🧁',
+                    'Deli': '🥪', 'Wine and Spirits': '🍷', 'Beer': '🍺',
+                    'Shop': '🛍️', 'Fashion': '👔', 'Clothing': '👕', 'Accessories': '👜',
+                    'Bookstore': '📚', 'Furniture': '🪑', 'Sport store': '⚽', 'Lingerie store': '👙',
+                    'Beauty': '💄', 'Hair': '💇', 'Hair salon': '💇', 'Spa': '🧘', 'Cosmetic': '💋',
+                    'Nail salon': '💅', 'Barber': '✂️', 'Health': '🏥', 'Fitness': '💪', 'Gym': '🏋️',
+                    'Culture': '🎭', 'Art': '🎨', 'Museum': '🏛️', 'Performing Arts': '🎪',
+                    'Nightlife': '🌃', 'Hotel': '🏨', 'Tour': '🗺️', 'Entertainment': '🎬',
+                    'Catering': '🍽️'
+                };
+                
+                for (const tag of tags) {
+                    if (categoryEmojis[tag]) {
+                        return categoryEmojis[tag];
+                    }
+                }
+                return '';
+            }
+            
+            container.innerHTML = filteredVenues.map(venue => {
+                const formattedAddress = venue.district ? 
+                    venue.address.replace(', Berlin', `, ${venue.district}`) : 
+                    venue.address;
+                
+                const categoryEmoji = getCategoryEmoji(venue.tags);
+                
+                return `
+                    <div class="venue-card">
+                        ${categoryEmoji ? `<div class="venue-category-emoji">${categoryEmoji}</div>` : ''}
+                        <div class="venue-name">${venue.name}</div>
+                        <div class="venue-address">${formattedAddress}</div>
+                        
+                        ${venue.tags.length > 0 ? `
+                            <div class="venue-tags">
+                                ${venue.tags.map(tag => `<span class="venue-tag">${tag}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        ${venue.about ? `
+                            <div class="venue-about">${venue.about}</div>
+                        ` : ''}
+                        
+                        ${venue.website ? `
+                            <div class="venue-website">
+                                <a href="${venue.website}" target="_blank" rel="noopener noreferrer">Visit Website</a>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update results count
+        function updateResultsCount() {
+            const count = filteredVenues.length;
+            const total = venues.length;
+            document.getElementById('resultsCount').textContent = 
+                `Showing ${count} of ${total} venues`;
+        }
+
+        // Set view mode
+        function setView(view) {
+            currentView = view;
+            document.getElementById('gridView').classList.toggle('active', view === 'grid');
+            document.getElementById('listView').classList.toggle('active', view === 'list');
+            document.getElementById('mapView').classList.toggle('active', view === 'map');
+            
+            // Show/hide containers
+            const container = document.getElementById('venuesContainer');
+            const mapContainer = document.getElementById('mapContainer');
+            
+            if (view === 'map') {
+                container.style.display = 'none';
+                mapContainer.style.display = 'block';
+            } else {
+                container.style.display = '';
+                container.className = view === 'grid' ? 'venues-grid' : 'venues-list';
+                mapContainer.style.display = 'none';
+            }
+            
+            if (view === 'map') {
+                initializeMap();
+            } else {
+                renderVenues();
+            }
+        }
+
+        // Initialize map
+        function initializeMap() {
+            if (!map) {
+                map = L.map('map').setView([52.5200, 13.4050], 11); // Berlin center
+                
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+            }
+            
+            updateMapMarkers();
+        }
+
+        // Update map markers based on filtered venues
+        function updateMapMarkers() {
+            if (!map) return;
+            
+            // Clear existing markers
+            markers.forEach(marker => map.removeLayer(marker));
+            markers = [];
+            
+            // Add markers for filtered venues with pre-computed coordinates
+            filteredVenues.forEach(venue => {
+                if (venue.coordinates && venue.coordinates[0] && venue.coordinates[1]) {
+                    const coords = venue.coordinates;
+                    // Filter out coordinates that are outside Berlin area (roughly 52.3-52.7, 13.0-13.8)
+                    if (coords[0] < 52.3 || coords[0] > 52.7 || coords[1] < 13.0 || coords[1] > 13.8) {
+                        console.warn(`Skipping venue ${venue.name} with suspicious coordinates:`, coords);
+                        return;
+                    }
+                    const marker = L.marker(coords).addTo(map);
+                    
+                    const popupContent = `
+                        <div class="map-popup">
+                            <h4>${venue.name}</h4>
+                            <p>📍 ${venue.address}</p>
+                            ${venue.district ? `<p style="color: #8e8e8e; font-style: italic;">🏘️ ${venue.district}</p>` : ''}
+                            ${venue.tags.length > 0 ? `
+                                <div class="popup-tags">
+                                    ${venue.tags.map(tag => `<span class="popup-tag">${tag}</span>`).join('')}
+                                </div>
+                            ` : ''}
+                            ${venue.about ? `<p style="margin-top: 0.5rem; font-style: italic;">${venue.about.substring(0, 100)}...</p>` : ''}
+                            ${venue.website ? `
+                                <div class="popup-website">
+                                    <a href="${venue.website}" target="_blank" rel="noopener noreferrer">Visit Website</a>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    
+                    marker.bindPopup(popupContent);
+                    markers.push(marker);
+                }
+            });
+            
+            // Fit map bounds to show all markers if there are any
+            if (markers.length > 0) {
+                const group = new L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.1));
+            }
+        }
+
+
+        // Add event listeners for search inputs with filter updates
+        document.getElementById('nameSearch').addEventListener('input', () => {
+            filterVenues();
+            renderTagFilters();
+            renderDistrictFilters();
+        });
+
+        // Load venues on page load
+        loadVenues();
+    </script>
+</body>
+</html>
